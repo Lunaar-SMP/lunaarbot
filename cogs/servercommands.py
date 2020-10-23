@@ -1,5 +1,4 @@
 import json
-
 import discord
 from discord.ext import commands
 from mcrcon import MCRcon
@@ -31,18 +30,16 @@ class servercommands(commands.Cog):
     @commands.command(help = 'Tells who is online')
     async def online(self, ctx):
         self.rcon.connect()
-        msg = self.rcon.command(f'list')
-        print(msg)
-        embed = discord.Embed(colour=discord.member.color, timestamp=ctx.message.created_at)
-        embed.set_thumbnail(url=discord.member.avatar_url)
-        embed.add_field(name=f'({len(msg)})' " players online: ", value=msg)
+        players = self.rcon.command(f'list').partition(': ')[2].split()
+        print(players)
+        print('\n'.join(players))
+        embed = discord.Embed(
+            title=f'Online players: {len(players)}',
+            colour=0xFEFEFE,
+            description='\n'.join(players)
+        )
         await ctx.send(embed=embed)
-        #await ctx.send(f'{msg}')
 
-    @commands.command()
-    @commands.has_role('Dev')
-    async def startserver(self, ctx):
-        subprocess.call([r'C:/Users/tyler/Desktop/1.15.2_Server/start.bat'])
 
 def setup(client):
     client.add_cog(servercommands(client))

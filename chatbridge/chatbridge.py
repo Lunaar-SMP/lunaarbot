@@ -2,13 +2,11 @@ import tailer
 import json
 import discord
 from discord.ext import commands, tasks
-from discord.utils import get
-import mcrcon
 from mcrcon import MCRcon
 
 client = discord.Client()
 
-with open('./chatbridge/chatbridge.json') as json_file:
+with open('./config/chatbridge.json') as json_file:
     config = json.load(json_file)
 
 class chatbridge(commands.Cog):

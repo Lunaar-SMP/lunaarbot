@@ -1,10 +1,12 @@
+import json
 import discord
 from discord.ext import commands
 import os
 
 client = commands.Bot(command_prefix='!', case_insensitive=True)
 
-log_channel_id = 769171777338474496
+with open('./config/discord.json') as json_file:
+    config = json.load(json_file)
 
 @client.command()
 async def load(ctx, extension):
@@ -29,7 +31,7 @@ async def on_ready():
     game = discord.Game(name = 'chrome remote desktop')
     await client.change_presence(activity = game)
 
-    log_channel = client.get_channel(log_channel_id)
+    log_channel = client.get_channel(config['log_channel'])
     await log_channel.send(content = 'Bot is online.')
 
 for filename in os.listdir('./cogs'):
@@ -43,4 +45,4 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send(embed=discord.Embed(title='You do not have permission to execute this command', color=0xFF0000))
 
-client.run('token', bot = True, reconnect = True)
+client.run(config['token'], bot = True, reconnect = True)

@@ -1,3 +1,5 @@
+import json
+
 import discord
 from discord.ext import commands
 from mcrcon import MCRcon
@@ -5,11 +7,14 @@ import subprocess
 
 client = discord.Client()
 
+with open('./config/chatbridge.json') as json_file:
+    config = json.load(json_file)
+
 class servercommands(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.rcon = MCRcon('127.0.0.1', '12345', 25575)
+        self.rcon = MCRcon(config['rcon']['rcon-ip'], config['rcon']['rcon-password'], config['rcon']['rcon-port'])
 
     @commands.Cog.listener()
     async def on_ready(self):

@@ -1,7 +1,5 @@
 import discord
 from discord.ext import commands
-import mcrcon
-from mcrcon import MCRcon
 import random
 
 client = discord.Client()

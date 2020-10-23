@@ -1,0 +1,13 @@
+{
+    "guild": 767498295319986178,
+    "bridge_channel": 769030811420065844,
+
+    "rcon": {
+        "rcon-ip": "",
+        "rcon-password": "",
+        "rcon-port": 25575
+    },
+    "minecraft_to_discord":{
+        "latest.log": ""
+    }
+}

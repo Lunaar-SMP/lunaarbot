@@ -36,6 +36,8 @@ for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         client.load_extension(f'cogs.{filename[:-3]}')
 
+client.load_extension('chatbridge.chatbridge')
+
 @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CheckFailure):

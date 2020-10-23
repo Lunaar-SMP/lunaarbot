@@ -6,24 +6,24 @@ import random
 
 client = discord.Client()
 
-class commands(commands.Cog):
+class discordcommands(commands.Cog):
 
     def __init__(self, client):
         self.client = client
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print('Commands is online.')
+        print('Discordcommands is online.')
 
-    @commands.command()
+    @commands.command(help = 'This commamd tells how much ping the bot has')
     async def ping(self, ctx):
         await ctx.send(f'Pong! {round((self.client.latency * 1000), 1)}ms')
 
-    @commands.command()
+    @commands.command(help = 'Want to apply to Lunaar? Type !application and click the link below')
     async def application(self, ctx):
         await ctx.send('https://forms.gle/TVuATxk4rTbH4Eub7')
 
-    @commands.command(aliases = ['8ball'])
+    @commands.command(aliases = ['8ball'], help = 'Test your fate with the omniscient 8ball')
     async def _8ball(self, ctx, *, question):
         responses = ["It is certain.",
     "It is decidedly so.",
@@ -47,34 +47,33 @@ class commands(commands.Cog):
     "Very doubtful."]
         await ctx.send(f'Question: {question}\nAnswer: {random.choice(responses)}')
 
-    @commands.command()
-    @commands.has_role('Admin')
+    @commands.command(help = 'This command allows people with the Admin role to clear messages easily')
+    @commands.has_role('Dev')
     async def clear(self, ctx, amount=0):
         await ctx.channel.purge(limit=amount + 1)
         await ctx.send(f'Deleted {amount} messages')
 
-    @commands.command()
+    @commands.command(help = 'Admins can kick people with this command')
+    @commands.has_role('Dev')
     async def kick(self, ctx, member : discord.Member, *, reason=None):
         await member.kick(reason=reason)
 
-    @commands.command()
+    @commands.command(help = 'Admins can ban people with this command')
+    @commands.has_role('Dev')
     async def ban(self, ctx, member : discord.Member, *, reason=None):
         await member.ban(reason=reason)
 
-    @commands.command()
-    @commands.has_role('Admin')
-    async def whitelist(self, ctx, name):
-        rcon = MCRcon('ip', 'rcon password', rcon , port)
-        rcon.connect()
-        msg = rcon.command(f'whitelist add {name}')
-        await ctx.send(f'{msg}')
+    @commands.command(help = 'Admins can give roles with this command. To use, type !addrole role @person')
+    @commands.has_role('Dev')
+    async def addrole(self, ctx, role : discord.Role, user : discord.Member):
+        await user.add_roles(role)
+        await ctx.send(f'Gave {role.mention} to {user.mention}.')
 
-    @commands.command()
-    async def online(self, ctx):
-        rcon = MCRcon('ip', 'rcon password', rcon , port)
-        rcon.connect()
-        msg = rcon.command(f'list')
-        await ctx.send(f'{msg}')
+    @commands.command(help = 'Admins can remove roles with this command')
+    @commands.has_role('Dev')
+    async def removerole(self, ctx, role : discord.Role, user : discord.Member):
+        await user.remove_roles(role)
+        await ctx.send(f'Removed {role.mention} from {user.mention}.')
 
 def setup(client):
-    client.add_cog(commands(client))
+    client.add_cog(discordcommands(client))

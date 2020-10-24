@@ -4,6 +4,7 @@ from discord.ext import commands
 import os
 
 client = commands.Bot(command_prefix='!', case_insensitive=True)
+client.remove_command('help')
 
 with open('./config/discord.json') as json_file:
     config = json.load(json_file)

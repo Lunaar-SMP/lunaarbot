@@ -1,8 +1,13 @@
+import json
+
 import discord
 from discord.ext import commands
 import random
 
 client = discord.Client()
+
+with open('./config/discord.json') as json_file:
+    config = json.load(json_file)
 
 class discordcommands(commands.Cog):
 
@@ -21,7 +26,7 @@ class discordcommands(commands.Cog):
     async def application(self, ctx):
         await ctx.send('https://forms.gle/TVuATxk4rTbH4Eub7')
 
-    @commands.command(aliases = ['8ball'], help = 'Test your fate with the omniscient 8ball')
+    @commands.command(name = '8ball', help = 'Test your fate with the omniscient 8ball')
     async def _8ball(self, ctx, *, question):
         responses = ["It is certain.",
     "It is decidedly so.",
@@ -46,29 +51,29 @@ class discordcommands(commands.Cog):
         await ctx.send(f'Question: {question}\nAnswer: {random.choice(responses)}')
 
     @commands.command(help = 'This command allows people with the Admin role to clear messages easily')
-    @commands.has_role('Dev')
+    @commands.has_role(config['admin_role'])
     async def clear(self, ctx, amount=0):
         await ctx.channel.purge(limit=amount + 1)
         await ctx.send(f'Deleted {amount} messages')
 
     @commands.command(help = 'Admins can kick people with this command')
-    @commands.has_role('Dev')
+    @commands.has_role(config['admin_role'])
     async def kick(self, ctx, member : discord.Member, *, reason=None):
         await member.kick(reason=reason)
 
     @commands.command(help = 'Admins can ban people with this command')
-    @commands.has_role('Dev')
+    @commands.has_role(config['admin_role'])
     async def ban(self, ctx, member : discord.Member, *, reason=None):
         await member.ban(reason=reason)
 
     @commands.command(help = 'Admins can give roles with this command. To use, type !addrole role @person')
-    @commands.has_role('Dev')
+    @commands.has_role(config['admin_role'])
     async def addrole(self, ctx, role : discord.Role, user : discord.Member):
         await user.add_roles(role)
         await ctx.send(f'Gave {role.mention} to {user.mention}.')
 
     @commands.command(help = 'Admins can remove roles with this command')
-    @commands.has_role('Dev')
+    @commands.has_role(config['admin_role'])
     async def removerole(self, ctx, role : discord.Role, user : discord.Member):
         await user.remove_roles(role)
         await ctx.send(f'Removed {role.mention} from {user.mention}.')

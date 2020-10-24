@@ -2,7 +2,7 @@ import json
 import discord
 from discord.ext import commands
 from mcrcon import MCRcon
-import subprocess
+
 
 client = discord.Client()
 
@@ -13,7 +13,7 @@ class servercommands(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.rcon = MCRcon(config['rcon']['rcon-ip'], config['rcon']['rcon-password'], config['rcon']['rcon-port'])
+        self.rcon = MCRcon(config['rcon_smp']['rcon-ip'], config['rcon_smp']['rcon-password'], config['rcon_smp']['rcon-port'])
 
     @commands.Cog.listener()
     async def on_ready(self):

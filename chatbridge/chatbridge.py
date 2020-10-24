@@ -13,9 +13,12 @@ class chatbridge(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.rcon = MCRcon(config['rcon']['rcon-ip'], config['rcon']['rcon-password'], config['rcon']['rcon-port'])
-        self.rcon.connect()
-        self.line = tailer.tail(open(config['minecraft_to_discord']['latest.log']), 1)[1]
+        self.rcon_smp = MCRcon(config['rcon_smp']['rcon-ip'], config['rcon_smp']['rcon-password'], config['rcon_smp']['rcon-port'])
+        self.rcon_smp.connect()
+        self.line_smp = tailer.tail(open(config['smp']['latest.log']), 1)[1]
+        self.rcon_cmp = MCRcon(config['rcon_cmp']['rcon-ip'], config['rcon_cmp']['rcon-password'], config['rcon_cmp']['rcon-port'])
+        self.rcon_cmp.connect()
+        self.line_cmp = tailer.tail(open(config['cmp']['latest.log']), 1)[1]
         self.minecraft_to_discord.start()
 
     @commands.Cog.listener()
@@ -36,20 +39,38 @@ class chatbridge(commands.Cog):
                 for attachment in message.attachments:
                     _message = _message + '{"text":' + '"{}"'.format(attachment.filename) + ',"clickEvent":{"action":"open_url", "value":' + '"{}"'.format(attachment.url) + '}, "hoverEvent": {"action":"show_text", "value":"Click to open in your web browser"}, "color": "green"}'
                 _message = _message + ']'
-                self.rcon.command(_message)
+                self.rcon_smp.command(_message)
+                self.rcon_cmp.command(_message)
             else:
                 _message = '/tellraw @a ' +  '["[",{"text":' + '"{}"'.format(author) + ',"color":"aqua"}, "] ",' + '{"text":' + '"{}"'.format(message.content) + ',"color":"white"}]'
-                self.rcon.command(_message)
+                self.rcon_smp.command(_message)
+                self.rcon_cmp.command(_message)
 
     @tasks.loop(seconds=0.01)
     async def minecraft_to_discord(self):
-        line = tailer.tail(open(config['minecraft_to_discord']['latest.log']), 1)[1]
-        if self.line != line:
-            self.line = line
-            if '>' in line:
-                await self.bridge_channel.send((line.partition(']:')[2]).replace('<', '').replace('>', ':'))
-            elif 'the game' in line:
-                await self.bridge_channel.send(line.partition(']:')[2])
+        #smp
+        line_smp = tailer.tail(open(config['smp']['latest.log']), 1)[1]
+        if self.line_smp != line_smp:
+            self.line_smp = line_smp
+            if '>' in line_smp:
+                message = (line_smp.partition(']:')[2]).replace('<', '', 1).replace('>', ':', 1)[1:]
+                await self.bridge_channel.send('[SMP] ' + message)
+                cmd = '/tellraw @a ' + '["[",{"text":' + '"{}"'.format(message.partition(':')[0]) + ',"color":"red"}, "] ",' + '{"text":' + '"{}"'.format(message.partition(':')[2][1:]) + ',"color":"white"}]'
+                self.rcon_cmp.command(cmd)
+            elif 'the game' in line_smp:
+                await self.bridge_channel.send(line_smp.partition(']:')[2][:4] + 'SMP')
+
+        #cmp
+        line_cmp = tailer.tail(open(config['cmp']['latest.log']), 1)[1]
+        if self.line_cmp != line_cmp:
+            self.line_cmp = line_cmp
+            if '>' in line_cmp:
+                message = (line_cmp.partition(']:')[2]).replace('<', '', 1).replace('>', ':', 1)[1:]
+                await self.bridge_channel.send('[CMP] ' +message)
+                cmd = '/tellraw @a ' + '["[",{"text":' + '"{}"'.format(message.partition(':')[0]) + ',"color":"red"}, "] ",' + '{"text":' + '"{}"'.format(message.partition(':')[2][1:]) + ',"color":"white"}]'
+                self.rcon_smp.command(cmd)
+            elif 'the game' in line_cmp:
+                await self.bridge_channel.send(line_cmp.partition(']:')[2][:4] + 'CMP')
 
 def setup(client):
     client.add_cog(chatbridge(client))

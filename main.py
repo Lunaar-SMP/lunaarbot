@@ -17,14 +17,6 @@ async def load(ctx, extension):
 async def unload(ctx, extension):
     client.unload_extension(f'cogs.{extension}')
 
-@client.command(name = 'restart', help = 'Restarts the bot')
-@commands.has_role('Dev')
-async def restart(ctx):
-    embed = discord.Embed(
-    title = f'{client.user.name} restarting!'
-    )
-    await client.close()
-
 @client.event
 async def on_ready():
     print(f'Logged in as {client.user} and connected to Discord! (ID: {client.user.id})')

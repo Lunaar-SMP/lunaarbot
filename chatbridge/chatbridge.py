@@ -21,6 +21,9 @@ class chatbridge(commands.Cog):
         self.rcon_cmp = MCRcon(config['rcon_cmp']['rcon-ip'], config['rcon_cmp']['rcon-password'], config['rcon_cmp']['rcon-port'])
         self.rcon_cmp.connect()
         self.line_cmp = list(open(config['cmp']['latest.log']))[-1][:-1]
+        self.rcon_mirror = MCRcon(config['rcon_mirror']['rcon-ip'], config['rcon_mirror']['rcon-password'], config['rcon_mirror']['rcon-port'])
+        self.rcon_mirror.connect()
+        self.line_mirror = list(open(config['mirror']['latest.log']))[-1][:-1]
         self.minecraft_to_discord.start()
 
     @commands.Cog.listener()
@@ -35,7 +38,7 @@ class chatbridge(commands.Cog):
                 author = message.author.nick
             else:
                 author = message.author.name
-            
+
             if message.attachments:
                 _message = '/tellraw @a ' +  '["[",{"text":' + '"{}"'.format(author) + ',"color":"aqua"}, "] ",'
                 for attachment in message.attachments:
@@ -43,10 +46,12 @@ class chatbridge(commands.Cog):
                 _message = _message + ']'
                 self.rcon_smp.command(_message)
                 self.rcon_cmp.command(_message)
+                self.rcon_mirror.command(_message)
             else:
                 _message = '/tellraw @a ' +  '["[",{"text":' + '"{}"'.format(author) + ',"color":"aqua"}, "] ",' + '{"text":' + '"{}"'.format(message.content) + ',"color":"white"}]'
                 self.rcon_smp.command(_message)
                 self.rcon_cmp.command(_message)
+                self.rcon_mirror.command(_message)
 
     @tasks.loop(seconds=0.01)
     async def minecraft_to_discord(self):
@@ -55,7 +60,7 @@ class chatbridge(commands.Cog):
             log_file.seek(-2, os.SEEK_END)
             while log_file.read(1) != b'\n':
                 log_file.seek(-2, os.SEEK_CUR)
-            line_smp = log_file.readline().decode()[:-2]
+            line_smp = log_file.readline().decode()[:-1]
             if self.line_smp != line_smp:
                 self.line_smp = line_smp
                 if '<' == line_smp[33]:
@@ -63,8 +68,10 @@ class chatbridge(commands.Cog):
                     await self.bridge_channel.send('[SMP] ' + message)
                     cmd = '/tellraw @a ' + '["[",{"text":' + '"{}"'.format(message.partition(':')[0]) + ',"color":"red"}, "] ",' + '{"text":' + '"{}"'.format(message.partition(':')[2][1:]) + ',"color":"white"}]'
                     self.rcon_cmp.command(cmd)
-
-                elif 'the game' in line_smp and not 'Sav' in line_smp:
+                    self.rcon_mirror.command(cmd)
+                elif 'the game' in line_smp:
+                    if 'Sav' in line_smp:
+                        return
                     await self.bridge_channel.send(line_smp.partition(']:')[2][:-4] + 'SMP')
 
         #cmp
@@ -72,7 +79,7 @@ class chatbridge(commands.Cog):
             log_file.seek(-2, os.SEEK_END)
             while log_file.read(1) != b'\n':
                 log_file.seek(-2, os.SEEK_CUR)
-            line_cmp = log_file.readline().decode()[:-2]
+            line_cmp = log_file.readline().decode()[:-1]
             if self.line_cmp != line_cmp:
                 self.line_cmp = line_cmp
                 if '<' == line_cmp[33]:
@@ -80,9 +87,30 @@ class chatbridge(commands.Cog):
                     await self.bridge_channel.send('[CMP] ' +message)
                     cmd = '/tellraw @a ' + '["[",{"text":' + '"{}"'.format(message.partition(':')[0]) + ',"color":"red"}, "] ",' + '{"text":' + '"{}"'.format(message.partition(':')[2][1:]) + ',"color":"white"}]'
                     self.rcon_smp.command(cmd)
-                elif 'the game' in line_cmp and not 'Sav' in line_cmp:
+                    self.rcon_mirror.command(cmd)
+                elif 'the game' in line_cmp:
+                    if 'Sav' in line_cmp:
+                        return
                     await self.bridge_channel.send(line_cmp.partition(']:')[2][:-4] + 'CMP')
+
+        #mirror
+        with open(config['mirror']['latest.log'], 'rb') as log_file:
+            log_file.seek(-2, os.SEEK_END)
+            while log_file.read(1) != b'\n':
+                log_file.seek(-2, os.SEEK_CUR)
+            line_mirror = log_file.readline().decode()[:-1]
+            if self.line_mirror != line_mirror:
+                self.line_mirror = line_mirror
+                if '<' == line_mirror[33]:
+                    message = (line_mirror.partition(']:')[2]).replace('<', '', 1).replace('>', ':', 1)[1:]
+                    await self.bridge_channel.send('[Mirror] ' +message)
+                    cmd = '/tellraw @a ' + '["[",{"text":' + '"{}"'.format(message.partition(':')[0]) + ',"color":"red"}, "] ",' + '{"text":' + '"{}"'.format(message.partition(':')[2][1:]) + ',"color":"white"}]'
+                    self.rcon_smp.command(cmd)
+                    self.rcon_cmp.command(cmd)
+                elif 'the game' in line_mirror:
+                    if 'Sav' in line_mirror:
+                        return
+                    await self.bridge_channel.send(line_mirror.partition(']:')[2][:-4] + 'Mirror')
 
 def setup(client):
     client.add_cog(chatbridge(client))
-

@@ -18,6 +18,7 @@ class servercommands(commands.Cog):
         self.client = client
         self.rcon_smp = MCRcon(config_rcon['rcon_smp']['rcon-ip'], config_rcon['rcon_smp']['rcon-password'], config_rcon['rcon_smp']['rcon-port'])
         self.rcon_cmp = MCRcon(config_rcon['rcon_cmp']['rcon-ip'], config_rcon['rcon_cmp']['rcon-password'], config_rcon['rcon_cmp']['rcon-port'])
+        self.rcon_mirror = MCRcon(config_rcon['rcon_mirror']['rcon-ip'], config_rcon['rcon_mirror']['rcon-password'], config_rcon['rcon_mirror']['rcon-port'])
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -40,10 +41,20 @@ class servercommands(commands.Cog):
         if resp:
             await ctx.send(f'```{resp}```')
 
+    @commands.command(help = 'All server commands can be used with the format: !execute command. For example, !execute whitelist notch. Note that only members with the role Admin can use this command.(Mirror)')
+    @commands.has_role(config_discord['admin_role'])
+    async def execute_mirror(self, ctx, *, command):
+        self.rcon_mirror.connect()
+        resp = self.rcon_mirror.command(f'/{command}')
+        if resp:
+            await ctx.send(f'```{resp}```')
+
     @commands.command(help = 'Tells who is online')
     async def online(self, ctx):
         self.rcon_smp.connect()
         players = self.rcon_smp.command(f'list').partition(': ')[2].split()
+        print(players)
+        print('\n'.join(players))
         embed = discord.Embed(
             title=f'Online players: {len(players)}',
             colour=0xFEFEFE,

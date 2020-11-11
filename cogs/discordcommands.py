@@ -70,13 +70,13 @@ class discordcommands(commands.Cog):
     @commands.has_role(config['admin_role'])
     async def addrole(self, ctx, role : discord.Role, user : discord.Member):
         await user.add_roles(role)
-        await ctx.send(f'Gave {role.mention} to {user.mention}.')
+        await ctx.send(f'Gave {role} to {user.mention}.')
 
     @commands.command(help = 'Admins can remove roles with this command')
     @commands.has_role(config['admin_role'])
     async def removerole(self, ctx, role : discord.Role, user : discord.Member):
         await user.remove_roles(role)
-        await ctx.send(f'Removed {role.mention} from {user.mention}.')
+        await ctx.send(f'Removed {role} from {user.mention}.')
 
 def setup(client):
     client.add_cog(discordcommands(client))

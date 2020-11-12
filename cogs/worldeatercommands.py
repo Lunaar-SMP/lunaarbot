@@ -73,6 +73,8 @@ class worldeatercommands(commands.Cog):
         self.check_worldeater.stop()
         self.coords = ()
         self.peri_size = 0
+        self.worldeater_crashed = False
+        self.we_updates = False
         await ctx.send(embed=discord.Embed(
             title=f'World eater script is stopped now',
             colour=0x00FF00,
@@ -131,15 +133,17 @@ class worldeatercommands(commands.Cog):
                     title='No world eater is running',
                     color=0xFF0000))
             return
-
-
-        if self.worldeater_crashed:
-            title = 'World eater is stuck'
-            color = 0xFF0000
-        if not self.coords:
-            msg = 'You are running without height control'
+        if self.we_updates:
+            await ctx.send(
+                embed=discord.Embed(
+                    title='Live updates turned off',
+                    color=0xFF0000))
         else:
-            self.we_updates.start()
+            await ctx.send(
+                embed=discord.Embed(
+                    title='Live updates turned on',
+                    color=0x00FF00))
+        self.we_updates = not self.we_updates
 
     @tasks.loop()
     async def check_worldeater(self):
@@ -161,16 +165,25 @@ class worldeatercommands(commands.Cog):
             self.worldeater_crashed = False
             self.check_worldeater.change_interval(seconds=self.peri_size / 2)
             await self.we_channel.send(f'World eater is fine again.')
-            if(self.we_updates and not self.worldeater_crashed):
+        if(self.we_updates and not self.worldeater_crashed):
+            if not self.coords:
+                msg = 'still running'
+            else:
                 self.rcon_smp.connect()
                 resp = self.rcon_smp.command(f'/script run top(\'surface\',{self.coords[0]}, 0, {self.coords[1]})')
                 yLevel = int(resp.split()[1]) + 1
                 timeleft = str(datetime.timedelta(seconds=(self.peri_size / 2) * yLevel))
                 msg = f'y-level: ~{yLevel}\n' \
                       f'WE has to run for another ~{timeleft}'
-                      self.we_updates.change_interval(seconds=self.peri_size / 2)
-                      return
-            self.rcon_smp.disconnect()
+                self.rcon_smp.disconnect()
+            await self.we_channel.send(embed=discord.Embed(
+                title='WE Updates',
+                colour=0x00FF00,
+                description=msg
+            ))
+        self.rcon_smp.disconnect()
+
+
 
 def setup(client):
     client.add_cog(worldeatercommands(client))

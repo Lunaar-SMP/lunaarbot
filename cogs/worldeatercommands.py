@@ -1,13 +1,11 @@
 import asyncio
 import datetime
+from discord.utils import get
 import json
-import time
-from asyncio import Task
 
 import discord
 from discord.ext import commands, tasks
 from mcrcon import MCRcon
-
 
 client = discord.Client()
 
@@ -22,7 +20,7 @@ class worldeatercommands(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.rcon_smp = MCRcon(config_rcon['rcon_smp']['rcon-ip'], config_rcon['rcon_smp']['rcon-password'],config_rcon['rcon_smp']['rcon-port'])
+        self.rcon_smp = MCRcon(config_rcon['rcon_smp']['rcon-ip'], config_rcon['rcon_smp']['rcon-password'], config_rcon['rcon_smp']['rcon-port'])
         self.coords = ()
         self.peri_size = 0
         self.worldeater_crashed = False
@@ -30,12 +28,18 @@ class worldeatercommands(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print('World eater commands is online.')
-        self.guild = self.client.get_guild(767498295319986178)
-        self.we_channel = discord.utils.get(self.guild.text_channels, id=767588796932947991)
+        self.guild = self.client.get_guild(config_rcon['guild'])
+        self.we_channel = discord.utils.get(self.guild.text_channels, id=config_discord["worldeater_channel"])
 
-    @commands.command(help = 'use this to start the worldeater script')
-    @commands.has_any_role('Member', 'Trial-Member', 'Dev')
+    @commands.command(help='use this to start the worldeater script. Arguments: peri_size , optional<x,z>. x and z argument: random position in the peri for height control')
+    @commands.has_any_role('Member', 'Trial-Member')
     async def westart(self, ctx, peri_size: int, *coords):
+        if self.check_worldeater.is_running():
+            await ctx.send(
+                embed=discord.Embed(
+                    title='World eater is already running',
+                    color=0xFF0000))
+            return
         self.peri_size = peri_size
         if len(coords) == 2:
             self.coords = coords
@@ -55,8 +59,8 @@ class worldeatercommands(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @commands.command(help = 'stops the worldeater script')
-    @commands.has_any_role('Member', 'Trial-Member', 'Dev')
+    @commands.command(help='stops the world eater script')
+    @commands.has_any_role('Member', 'Trial-Member')
     async def westop(self, ctx):
         if not self.check_worldeater.is_running():
             await ctx.send(
@@ -66,44 +70,76 @@ class worldeatercommands(commands.Cog):
             return
         self.check_worldeater.cancel()
         self.check_worldeater.stop()
-        await ctx.send(embed = discord.Embed(
+        self.coords = ()
+        self.peri_size = 0
+        await ctx.send(embed=discord.Embed(
             title=f'World eater script is stopped now',
             colour=0x00FF00,
         ))
 
-    @commands.command(help = 'get or remove worldeater role. you get pinged if worldeater crashes')
+    @commands.command(help='use this to get info about the world eater')
     @commands.has_any_role('Member', 'Trial-Member')
-    async def wehelperadd(self, ctx):
-        await ctx.message.author.add_roles('Worldeaterhelper')
-        await ctx.send('You now get pinged if a worldeater crashes')
+    async def westatus(self, ctx):
+        if not self.check_worldeater.is_running():
+            await ctx.send(
+                embed=discord.Embed(
+                    title='No world eater is running',
+                    color=0xFF0000))
+            return
 
-    #@commands.Cog.listener()
-    #async def on_raw_reaction_add(payload):
-    #    if payload.channel_id == 767588796932947991 and payload.message_id == 776120832191102976:
-    #        if str(payload.emoji) == "<:WEHelper:776121112294850591>":
-    #            guild = client.get_guild(payload.guild_id)
-    #    member = guild.get_member(payload.user_id)
-    #    role = get(payload.member.guild.roles, name = 'WE Helper')
-    #    await payload.member.add_roles(role)
-#
+        if self.worldeater_crashed:
+            title = 'World eater is stuck'
+            color = 0xFF0000
+        else:
+            title = 'World eater is running'
+            color = 0x00FF00
+
+        if not self.coords:
+            msg = 'You are running without height control'
+        else:
+            self.rcon_smp.connect()
+            resp = self.rcon_smp.command(f'/script run top(\'surface\',{self.coords[0]}, 0, {self.coords[1]})')
+            yLevel = int(resp.split()[1]) + 1
+            timeleft = str(datetime.timedelta(seconds=(self.peri_size / 2) * yLevel))
+            msg = f'y-level: ~{yLevel}\n' \
+                  f'WE has to run for another ~{timeleft}'
+            self.rcon_smp.disconnect()
+        await ctx.send(embed=discord.Embed(
+            title=title,
+            colour=color,
+            description=msg
+        ))
+
+    @commands.command(help='get or remove worldeater role. you get pinged if worldeater crashes')
+    @commands.has_any_role('Member', 'Trial-Member')
+    async def wehelper(self, ctx):
+        we_role = get(self.guild.roles, name=config_discord['worldeater_role'])
+        if not we_role in ctx.message.author.roles:
+            await ctx.message.author.add_roles(we_role)
+            await ctx.send('You now get pinged if a world eater crashes')
+        else:
+            await ctx.message.author.remove_roles(we_role)
+            await ctx.send('You are no longer a world eater helper')
+
     @tasks.loop()
     async def check_worldeater(self):
-        print(f'Loop: {time.localtime()}')
         self.rcon_smp.connect()
         resp = self.rcon_smp.command(f'/script run reduce(last_tick_times(),_a+_,0)/100;')
         resp = float(resp.split()[1])
         if resp < 30:
             if not self.worldeater_crashed:
                 await asyncio.sleep(10)
-                print(f'Wait: {time.localtime()}')
                 self.rcon_smp.connect()
                 resp = self.rcon_smp.command(f'/script run reduce(last_tick_times(),_a+_,0)/100;')
                 resp = float(resp.split()[1])
                 if resp < 30:
-                    await self.we_channel.send(f'World eater is stuck.')
+                    role = get(self.guild.roles, name=config_discord['worldeater_role'])
+                    await self.we_channel.send(f'{role.mention} World eater is stuck.')
                     self.worldeater_crashed = True
+                    self.check_worldeater.change_interval(seconds=10)
         elif self.worldeater_crashed:
             self.worldeater_crashed = False
+            self.check_worldeater.change_interval(seconds=self.peri_size / 2)
             await self.we_channel.send(f'World eater is fine again.')
         self.rcon_smp.disconnect()
 

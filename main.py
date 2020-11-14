@@ -10,12 +10,16 @@ with open('./config/discord.json') as json_file:
     config = json.load(json_file)
 
 @client.command()
+@commands.has_role(config['admin_role'])
 async def load(ctx, extension):
     client.load_extension(f'cogs.{extension}')
+    await ctx.send(f'loaded {extension}')
 
 @client.command()
+@commands.has_role(config['admin_role'])
 async def unload(ctx, extension):
     client.unload_extension(f'cogs.{extension}')
+    await ctx.send(f'unloaded {extension}')
 
 @client.event
 async def on_ready():

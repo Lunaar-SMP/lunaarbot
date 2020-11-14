@@ -51,15 +51,53 @@ class servercommands(commands.Cog):
 
     @commands.command(help = 'Tells who is online')
     async def online(self, ctx):
-        self.rcon_smp.connect()
-        players = self.rcon_smp.command(f'list').partition(': ')[2].split()
-        print(players)
-        print('\n'.join(players))
         embed = discord.Embed(
-            title=f'Online players: {len(players)}',
-            colour=0xFEFEFE,
-            description='\n'.join(players)
+            title='Online players',
+            colour=0xFEFEFE
         )
+        embed.set_footer(
+            text=f'Requested by {ctx.message.author.name}',
+            icon_url=ctx.message.author.avatar_url
+        )
+        try:
+            self.rcon_smp.connect()
+            players_smp = self.rcon_smp.command(f'list').partition(': ')[2].split()
+            embed.add_field(name=f'SMP: {len(players_smp)}',
+                            value='\n'.join(players_smp) if len(players_smp) > 0 else '\u200b',
+                            inline=True
+                            )
+        except:
+            embed.add_field(name='SMP is offline',
+                            value='\u200b',
+                            inline=True
+                            )
+
+        try:
+            self.rcon_cmp.connect()
+            players_cmp = self.rcon_cmp.command(f'list').partition(': ')[2].split()
+            embed.add_field(name=f'CMP: {len(players_cmp)}',
+                            value='\n'.join(players_cmp) if len(players_cmp) > 0 else '\u200b',
+                            inline=True
+                            )
+        except:
+            embed.add_field(name='CMP is offline',
+                            value='\u200b',
+                            inline=True
+                            )
+
+        try:
+            self.rcon_mirror.connect()
+            players_mirror = self.rcon_mirror.command(f'list').partition(': ')[2].split()
+            embed.add_field(name=f'SMP: {len(players_mirror)}',
+                            value='\n'.join(players_mirror) if len(players_mirror) > 0 else '\u200b',
+                            inline=True
+                            )
+        except:
+            embed.add_field(name='Mirror is offline',
+                            value='\u200b',
+                            inline=True
+                            )
+
         await ctx.send(embed=embed)
 
 

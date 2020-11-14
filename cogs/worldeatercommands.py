@@ -28,7 +28,7 @@ class worldeatercommands(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print('World eater commands is online.')
+        print('worldeatercommands is online.')
         self.guild = self.client.get_guild(config_rcon['guild'])
         self.we_channel = discord.utils.get(self.guild.text_channels, id=config_discord["worldeater_channel"])
 
@@ -165,7 +165,7 @@ class worldeatercommands(commands.Cog):
             self.worldeater_crashed = False
             self.check_worldeater.change_interval(seconds=self.peri_size / 2)
             await self.we_channel.send(f'World eater is fine again.')
-        if(self.we_updates and not self.worldeater_crashed):
+        if self.we_updates and not self.worldeater_crashed:
             if not self.coords:
                 msg = 'still running'
             else:

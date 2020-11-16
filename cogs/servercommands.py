@@ -49,7 +49,7 @@ class servercommands(commands.Cog):
         if resp:
             await ctx.send(f'```{resp}```')
 
-    @commands.command(help = 'Tells who is online')
+    @commands.command(help = 'Tells who is online', aliases=['o'])
     async def online(self, ctx):
         embed = discord.Embed(
             title='Online players',

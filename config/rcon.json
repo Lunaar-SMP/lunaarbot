@@ -1,11 +1,8 @@
 {
-    "guild": ,
-    "bridge_channel": ,
-
     "rcon_smp": {
         "rcon-ip": "",
         "rcon-password": "",
-        "rcon-port":
+        "rcon-port":25575
     },
     "smp":{
         "latest.log": ""
@@ -14,7 +11,7 @@
     "rcon_cmp": {
         "rcon-ip": "",
         "rcon-password": "",
-        "rcon-port":
+        "rcon-port":25595
     },
     "cmp":{
         "latest.log": ""
@@ -23,7 +20,7 @@
     "rcon_mirror": {
       "rcon-ip": "",
       "rcon-password": "",
-      "rcon-port":
+      "rcon-port":345
     },
     "mirror":{
         "latest.log": ""

@@ -9,7 +9,7 @@ from mcrcon import MCRcon
 
 client = discord.Client()
 
-with open('./config/chatbridge.json') as json_file:
+with open('./config/rcon.json') as json_file:
     config_rcon = json.load(json_file)
 
 with open('./config/discord.json') as json_file:
@@ -29,7 +29,7 @@ class worldeatercommands(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print('worldeatercommands is online.')
-        self.guild = self.client.get_guild(config_rcon['guild'])
+        self.guild = self.client.get_guild(config_discord['guild'])
         self.we_channel = discord.utils.get(self.guild.text_channels, id=config_discord["worldeater_channel"])
 
     @commands.command(help='use this to start the worldeater script. Arguments: peri_size , optional<x,z>. x and z argument: random position in the peri for height control')

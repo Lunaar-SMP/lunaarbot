@@ -6,7 +6,7 @@ from mcrcon import MCRcon
 
 client = discord.Client()
 
-with open('./config/chatbridge.json') as json_file:
+with open('./config/rcon.json') as json_file:
     config_rcon = json.load(json_file)
 
 with open('./config/discord.json') as json_file:
@@ -16,38 +16,61 @@ class servercommands(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.rcon_smp = MCRcon(config_rcon['rcon_smp']['rcon-ip'], config_rcon['rcon_smp']['rcon-password'], config_rcon['rcon_smp']['rcon-port'])
-        self.rcon_cmp = MCRcon(config_rcon['rcon_cmp']['rcon-ip'], config_rcon['rcon_cmp']['rcon-password'], config_rcon['rcon_cmp']['rcon-port'])
-        self.rcon_mirror = MCRcon(config_rcon['rcon_mirror']['rcon-ip'], config_rcon['rcon_mirror']['rcon-password'], config_rcon['rcon_mirror']['rcon-port'])
+        self.servers = {'SMP': MCRcon(config_rcon['rcon_smp']['rcon-ip'], config_rcon['rcon_smp']['rcon-password'], config_rcon['rcon_smp']['rcon-port']),
+                        'CMP': MCRcon(config_rcon['rcon_cmp']['rcon-ip'], config_rcon['rcon_cmp']['rcon-password'], config_rcon['rcon_cmp']['rcon-port']),
+                        'Mirror': MCRcon(config_rcon['rcon_mirror']['rcon-ip'], config_rcon['rcon_mirror']['rcon-password'], config_rcon['rcon_mirror']['rcon-port'])}
 
     @commands.Cog.listener()
     async def on_ready(self):
         print('Servercommands is online.')
 
-    @commands.command(help = 'All server commands can be used with the format: !execute command. For example, !execute whitelist notch. Note that only members with the role Admin can use this command.(SMP)')
-    @commands.has_role(config_discord['admin_role'])
-    async def execute_smp(self, ctx, *, command):
-        self.rcon_smp.connect()
-        resp = self.rcon_smp.command(f'/{command}')
-        if resp:
-            await ctx.send(f'```{resp}```')
-
     @commands.command(
         help='All server commands can be used with the format: !execute command. For example, !execute whitelist notch. Note that only members with the role Admin can use this command.(CMP)')
     @commands.has_role(config_discord['admin_role'])
-    async def execute_cmp(self, ctx, *, command):
-        self.rcon_cmp.connect()
-        resp = self.rcon_cmp.command(f'/{command}')
-        if resp:
-            await ctx.send(f'```{resp}```')
+    async def execute(self, ctx, server, * , command):
+        for k, v in self.servers.items():
+            if k.lower() == server.lower():
+                try:
+                    v.connect()
+                    resp = v.command(f'/{command}')
+                    v.disconnect()
+                    if resp:
+                        await ctx.send(f'```{resp}```')
+                        return
+                except:
+                    await ctx.send('Server offline')
+                    return
+        await ctx.send(f'No server **{server}** found')
 
-    @commands.command(help = 'All server commands can be used with the format: !execute command. For example, !execute whitelist notch. Note that only members with the role Admin can use this command.(Mirror)')
+    @commands.command(help = 'whitelist all')
     @commands.has_role(config_discord['admin_role'])
-    async def execute_mirror(self, ctx, *, command):
-        self.rcon_mirror.connect()
-        resp = self.rcon_mirror.command(f'/{command}')
-        if resp:
-            await ctx.send(f'```{resp}```')
+    async def whitelist(self, ctx, parameter, name=None):
+        embed = discord.Embed(
+            title='Witelist all',
+            colour=0xFEFEFE
+        )
+        embed.set_footer(
+            text=f'Requested by {ctx.message.author.name}',
+            icon_url=ctx.message.author.avatar_url
+        )
+        command = "/whitelist {}" .format(parameter + ' ' + name if name else parameter)
+        for k, v in self.servers.items():
+            try:
+                v.connect()
+                resp = v.command(command)
+                v.disconnect()
+                if resp:
+                    embed.add_field(name=k,
+                                    value=resp,
+                                    inline=True
+                                    )
+            except:
+                embed.add_field(name=f'{k} is offline',
+                                value='\u200b',
+                                inline= True
+                                )
+
+        await ctx.send(embed=embed)
 
     @commands.command(help = 'Tells who is online', aliases=['o'])
     async def online(self, ctx):
@@ -59,44 +82,20 @@ class servercommands(commands.Cog):
             text=f'Requested by {ctx.message.author.name}',
             icon_url=ctx.message.author.avatar_url
         )
-        try:
-            self.rcon_smp.connect()
-            players_smp = self.rcon_smp.command(f'list').partition(': ')[2].split()
-            embed.add_field(name=f'SMP: {len(players_smp)}',
-                            value='\n'.join(players_smp) if len(players_smp) > 0 else '\u200b',
-                            inline=True
-                            )
-        except:
-            embed.add_field(name='SMP is offline',
-                            value='\u200b',
-                            inline=True
-                            )
-
-        try:
-            self.rcon_cmp.connect()
-            players_cmp = self.rcon_cmp.command(f'list').partition(': ')[2].split()
-            embed.add_field(name=f'CMP: {len(players_cmp)}',
-                            value='\n'.join(players_cmp) if len(players_cmp) > 0 else '\u200b',
-                            inline=True
-                            )
-        except:
-            embed.add_field(name='CMP is offline',
-                            value='\u200b',
-                            inline=True
-                            )
-
-        try:
-            self.rcon_mirror.connect()
-            players_mirror = self.rcon_mirror.command(f'list').partition(': ')[2].split()
-            embed.add_field(name=f'SMP: {len(players_mirror)}',
-                            value='\n'.join(players_mirror) if len(players_mirror) > 0 else '\u200b',
-                            inline=True
-                            )
-        except:
-            embed.add_field(name='Mirror is offline',
-                            value='\u200b',
-                            inline=True
-                            )
+        for k, v in self.servers.items():
+            try:
+                v.connect()
+                players = v.command(f'list').partition(': ')[2].split()
+                v.disconnect()
+                embed.add_field(name=f'{k}: {len(players)}',
+                                value='\n'.join(players) if len(players) > 0 else '\u200b',
+                                inline=True
+                                )
+            except:
+                embed.add_field(name=f'{k} is offline',
+                                value='\u200b',
+                                inline=True
+                                )
 
         await ctx.send(embed=embed)
 

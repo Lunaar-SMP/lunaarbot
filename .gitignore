@@ -6,3 +6,8 @@ cogs/__pycache__/
 Start.bat
 
 chatbridge/__pycache__/
+
+/venv
+
+config/*
+!config/*.example

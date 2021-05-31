@@ -46,7 +46,7 @@ class servercommands(commands.Cog):
     @commands.has_role(config_discord['admin_role'])
     async def whitelist(self, ctx, parameter, name=None):
         embed = discord.Embed(
-            title='Witelist all',
+            title='Whitelist all',
             colour=0xFEFEFE
         )
         embed.set_footer(

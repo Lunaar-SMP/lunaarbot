@@ -25,6 +25,7 @@ class worldeatercommands(commands.Cog):
         self.peri_size = 0
         self.worldeater_crashed = False
         self.we_updates = False
+        self.mspt_value = 0
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -32,19 +33,37 @@ class worldeatercommands(commands.Cog):
         self.guild = self.client.get_guild(config_discord['guild'])
         self.we_channel = discord.utils.get(self.guild.text_channels, id=config_discord["worldeater_channel"])
 
+    @commands.command(help='use this to change mspt value while running a worldeater')
+    @commands.has_any_role('Member', 'Trial-Member')
+    async def changemspt(self, ctx, mspt_value: int):
+        if not self.check_worldeater.is_running():
+            await ctx.send(
+                embed=discord.Embed(
+                    title='No world eater is running',
+                    color=0xFF0000))
+        else:
+            self.mspt_value = mspt_value
+            embed=discord.Embed(
+                title=f'The new mspt value is {mspt_value}\n',
+                color=0xFF0000
+            )
+            await ctx.send(embed=embed)
+
     @commands.command(help='use this to start the worldeater script. Arguments: peri_size , optional<x,z>. x and z argument: random position in the peri for height control')
     @commands.has_any_role('Member', 'Trial-Member')
-    async def westart(self, ctx, peri_size: int, *coords):
+    async def westart(self, ctx, mspt_value: int, peri_size: int, *coords):
         if self.check_worldeater.is_running():
             await ctx.send(
                 embed=discord.Embed(
                     title='World eater is already running',
                     color=0xFF0000))
             return
+        self.mspt_value= mspt_value
         self.peri_size = peri_size
         if len(coords) == 2:
             self.coords = coords
-            msg = f'The peri size is: {peri_size}\n' \
+            msg = f'The mspt value is: {mspt_value}\n' \
+                  f'The peri size is: {peri_size}\n' \
                   f'Coordinates for height control: x={coords[0]} y={coords[1]}'
         else:
             self.coords = ()
@@ -75,6 +94,7 @@ class worldeatercommands(commands.Cog):
         self.peri_size = 0
         self.worldeater_crashed = False
         self.we_updates = False
+        self.mspt_value= 0
         await ctx.send(embed=discord.Embed(
             title=f'World eater script is stopped now',
             colour=0x00FF00,
@@ -104,8 +124,12 @@ class worldeatercommands(commands.Cog):
             resp = self.rcon_smp.command(f'/script run top(\'surface\',{self.coords[0]}, 0, {self.coords[1]})')
             yLevel = int(resp.split()[1]) + 1
             timeleft = str(datetime.timedelta(seconds=(self.peri_size / 2) * yLevel))
+            self.rcon_smp.connect()
+            resp = self.rcon_smp.command(f'/script run reduce(last_tick_times(),_a+_,0)/100;')
+            mspt = float(resp.split()[1])
             msg = f'y-level: ~{yLevel}\n' \
-                  f'WE has to run for another ~{timeleft}'
+                  f'WE has to run for another ~{timeleft}' \
+                  f'MSPT is ~{round((mspt * 1000),1)}'
             self.rcon_smp.disconnect()
         await ctx.send(embed=discord.Embed(
             title=title,
@@ -148,15 +172,16 @@ class worldeatercommands(commands.Cog):
     @tasks.loop()
     async def check_worldeater(self):
         self.rcon_smp.connect()
+        mspt_value = self.mspt_value
         resp = self.rcon_smp.command(f'/script run reduce(last_tick_times(),_a+_,0)/100;')
         resp = float(resp.split()[1])
-        if resp < 30:
+        if resp < mspt_value:
             if not self.worldeater_crashed:
                 await asyncio.sleep(10)
                 self.rcon_smp.connect()
                 resp = self.rcon_smp.command(f'/script run reduce(last_tick_times(),_a+_,0)/100;')
                 resp = float(resp.split()[1])
-                if resp < 30:
+                if resp < mspt_value:
                     role = get(self.guild.roles, name=config_discord['worldeater_role'])
                     await self.we_channel.send(f'{role.mention} World eater is stuck.')
                     self.worldeater_crashed = True
@@ -173,8 +198,12 @@ class worldeatercommands(commands.Cog):
                 resp = self.rcon_smp.command(f'/script run top(\'surface\',{self.coords[0]}, 0, {self.coords[1]})')
                 yLevel = int(resp.split()[1]) + 1
                 timeleft = str(datetime.timedelta(seconds=(self.peri_size / 2) * yLevel))
+                self.rcon_smp.connect()
+                resp = self.rcon_smp.command(f'/script run reduce(last_tick_times(),_a+_,0)/100;')
+                mspt = float(resp.split()[1])
                 msg = f'y-level: ~{yLevel}\n' \
-                      f'WE has to run for another ~{timeleft}'
+                      f'WE has to run for another ~{timeleft}' \
+                      f'MSPT is ~{round((mspt * 1000), 1)}'
                 self.rcon_smp.disconnect()
             await self.we_channel.send(embed=discord.Embed(
                 title='WE Updates',

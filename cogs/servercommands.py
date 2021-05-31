@@ -87,8 +87,12 @@ class servercommands(commands.Cog):
                 v.connect()
                 players = v.command(f'list').partition(': ')[2].split()
                 v.disconnect()
+                v.connect()
+                mspt = v.command(f'/script run reduce(last_tick_times(),_a+_,0)/100;')
+                v.disconnect()
                 embed.add_field(name=f'{k}: {len(players)}',
                                 value='\n'.join(players) if len(players) > 0 else '\u200b',
+                                description = f'MSPT is ~{round((mspt * 1000), 1)}',
                                 inline=True
                                 )
             except:

@@ -118,7 +118,11 @@ class worldeatercommands(commands.Cog):
             color = 0x00FF00
 
         if not self.coords:
-            msg = 'You are running without height control'
+            self.rcon_smp.connect()
+            resp = self.rcon_smp.command(f'/script run reduce(last_tick_times(),_a+_,0)/100;')
+            mspt = float(resp.split()[1])
+            msg = f'MSPT is ~{round((mspt),1)}\n' \
+                   'You are running without height control'
         else:
             self.rcon_smp.connect()
             resp = self.rcon_smp.command(f'/script run top(\'surface\',{self.coords[0]}, 0, {self.coords[1]})')
@@ -128,8 +132,8 @@ class worldeatercommands(commands.Cog):
             resp = self.rcon_smp.command(f'/script run reduce(last_tick_times(),_a+_,0)/100;')
             mspt = float(resp.split()[1])
             msg = f'y-level: ~{yLevel}\n' \
-                  f'WE has to run for another ~{timeleft}' \
-                  f'MSPT is ~{round((mspt * 1000),1)}'
+                  f'WE has to run for another ~{timeleft}\n' \
+                  f'MSPT is ~{round((mspt),1)}'
             self.rcon_smp.disconnect()
         await ctx.send(embed=discord.Embed(
             title=title,
@@ -202,8 +206,8 @@ class worldeatercommands(commands.Cog):
                 resp = self.rcon_smp.command(f'/script run reduce(last_tick_times(),_a+_,0)/100;')
                 mspt = float(resp.split()[1])
                 msg = f'y-level: ~{yLevel}\n' \
-                      f'WE has to run for another ~{timeleft}' \
-                      f'MSPT is ~{round((mspt * 1000), 1)}'
+                      f'WE has to run for another ~{timeleft}\n' \
+                      f'MSPT is ~{round((mspt), 1)}'
                 self.rcon_smp.disconnect()
             await self.we_channel.send(embed=discord.Embed(
                 title='WE Updates',

@@ -18,7 +18,8 @@ class servercommands(commands.Cog):
         self.client = client
         self.servers = {'SMP': MCRcon(config_rcon['rcon_smp']['rcon-ip'], config_rcon['rcon_smp']['rcon-password'], config_rcon['rcon_smp']['rcon-port']),
                         'CMP': MCRcon(config_rcon['rcon_cmp']['rcon-ip'], config_rcon['rcon_cmp']['rcon-password'], config_rcon['rcon_cmp']['rcon-port']),
-                        'Mirror': MCRcon(config_rcon['rcon_mirror']['rcon-ip'], config_rcon['rcon_mirror']['rcon-password'], config_rcon['rcon_mirror']['rcon-port'])}
+                        'Mirror': MCRcon(config_rcon['rcon_mirror']['rcon-ip'], config_rcon['rcon_mirror']['rcon-password'], config_rcon['rcon_mirror']['rcon-port']),
+                        'Testcreative': MCRcon(config_rcon['rcon_testcreative']['rcon-ip'], config_rcon['rcon_testcreative']['rcon-password'], config_rcon['rcon_testcreative']['rcon-port'])}
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -92,7 +93,7 @@ class servercommands(commands.Cog):
                 v.disconnect()
                 embed.add_field(name=f'{k}: {len(players)}',
                                 value='\n'.join(players) if len(players) > 0 else '\u200b',
-                                description = f'MSPT is ~{round((mspt * 1000), 1)}',
+                                description = f'MSPT is ~{round((mspt), 1)}',
                                 inline=True
                                 )
             except:

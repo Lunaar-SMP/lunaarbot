@@ -24,5 +24,14 @@
     },
     "mirror":{
         "latest.log": ""
+    },
+
+    "rcon_testcreative": {
+        "rcon-ip": "",
+        "rcon-password": "",
+        "rcon-port":25575
+    },
+    "testcreative":{
+        "latest.log": ""
     }
 }

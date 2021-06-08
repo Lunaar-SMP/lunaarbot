@@ -49,7 +49,7 @@ class worldeatercommands(commands.Cog):
             )
             await ctx.send(embed=embed)
 
-    @commands.command(help='use this to start the worldeater script. Arguments: peri_size , optional<x,z>. x and z argument: random position in the peri for height control')
+    @commands.command(help='use this to start the worldeater script. Arguments: mspt value, peri_size , optional<x,z>. x and z argument: random position in the peri for height control')
     @commands.has_any_role('Member', 'Trial-Member')
     async def westart(self, ctx, mspt_value: int, peri_size: int, *coords):
         if self.check_worldeater.is_running():
@@ -127,7 +127,7 @@ class worldeatercommands(commands.Cog):
             self.rcon_smp.connect()
             resp = self.rcon_smp.command(f'/script run top(\'surface\',{self.coords[0]}, 0, {self.coords[1]})')
             yLevel = int(resp.split()[1]) + 1
-            timeleft = str(datetime.timedelta(seconds=(self.peri_size / 2) * yLevel))
+            timeleft = str(datetime.timedelta(seconds=(self.peri_size / 2) * (yLevel - 5)))
             self.rcon_smp.connect()
             resp = self.rcon_smp.command(f'/script run reduce(last_tick_times(),_a+_,0)/100;')
             mspt = float(resp.split()[1])
@@ -201,7 +201,7 @@ class worldeatercommands(commands.Cog):
                 self.rcon_smp.connect()
                 resp = self.rcon_smp.command(f'/script run top(\'surface\',{self.coords[0]}, 0, {self.coords[1]})')
                 yLevel = int(resp.split()[1]) + 1
-                timeleft = str(datetime.timedelta(seconds=(self.peri_size / 2) * yLevel))
+                timeleft = str(datetime.timedelta(seconds=(self.peri_size / 2) * (yLevel - 5)))
                 self.rcon_smp.connect()
                 resp = self.rcon_smp.command(f'/script run reduce(last_tick_times(),_a+_,0)/100;')
                 mspt = float(resp.split()[1])

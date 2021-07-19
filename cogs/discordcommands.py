@@ -2,6 +2,7 @@ import json
 import discord
 from discord.ext import commands
 import random
+from discord.utils import get
 
 client = discord.Client()
 
@@ -11,6 +12,7 @@ with open('./config/discord.json') as json_file:
 class discordcommands(commands.Cog):
 
     def __init__(self, client):
+        self.guild = None
         self.client = client
 
     @commands.Cog.listener()
@@ -64,6 +66,14 @@ class discordcommands(commands.Cog):
     @commands.has_role(config['admin_role'])
     async def ban(self, ctx, member : discord.Member, *, reason=None):
         await member.ban(reason=reason)
+
+    @commands.command(help = 'Members can use this to mute people. !mute @user reason')
+    @commands.has_role('Member')
+    async def mute(self, ctx, member : discord.Member, *, reason=None):
+        mute_role = get(self.guild.roles, name=config['mute_role'])
+        log_channel = client.get_channel(config['log_channel'])
+        await member.add_roles(mute_role)
+        await log_channel.send(reason=reason)
 
     @commands.command(help = 'Admins can give roles with this command. To use, type !addrole role @person')
     @commands.has_role(config['admin_role'])

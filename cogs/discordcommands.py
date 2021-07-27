@@ -70,7 +70,7 @@ class discordcommands(commands.Cog):
     @commands.command(help = 'Members can use this to mute people. !mute @user reason')
     @commands.has_role('Member')
     async def mute(self, ctx, member : discord.Member, *, reason=None):
-        mute_role = get(self.guild.roles, name=config['mute_role'])
+        mute_role = discord.utils.get(ctx.guild.roles, name="muted")
         log_channel = client.get_channel(config['log_channel'])
         await member.add_roles(mute_role)
         await log_channel.send(reason=reason)
